@@ -1,0 +1,151 @@
+-- 테이블명 : student , 필드명 : no, name, kor, eng, math, total, avr, grade, rate
+-- 테이블명 : stduentDB
+drop database if exists StudentDB;
+create database StudentDB;
+-- table student 생성
+-- drop table if exists student;
+use StudentDB;
+create table studenttbl(
+   no char(6) not null primary Key,
+   name varchar(10) not null,
+   kor int not null,
+   eng int not null,
+   math int not null,
+   total int null,
+   avr decimal(5,2) null,
+   grade varchar(2) null,
+   rate int null default 0
+);
+
+create table deleteStudent(
+   no char(6) not null ,
+   name varchar(10) not null,
+   kor int not null,
+   eng int not null,
+   math int not null,
+   total int null,
+   avr decimal(5,2) null,
+   grade varchar(2) null,
+   rate int null,
+    deleteDate datetime
+);
+create table updateStudent(
+   no char(6) not null ,
+   name varchar(10) not null,
+   kor int not null,
+   eng int not null,
+   math int not null,
+   total int null,
+   avr decimal(5,2) null,
+   grade varchar(2) null,
+   rate int null,
+    updateDate datetime
+);
+
+
+
+
+-- 삽입
+insert into studenttbl values('010203','홍길동',100,100,100,300,100,'A',0);
+insert into studenttbl values('010101','박길동',100,100,100,300,100,'A',0);
+insert into studenttbl values('020202','저길동',100,100,100,300,100,'A',0);
+insert into studenttbl values('030303','사길동',100,100,100,300,100,'A',0);
+insert into studenttbl(no,name,kor,eng,math,total,avr,grade) values('020304','저길동',100,100,100,300,100,'A');
+
+-- 삭제alter where 없이 삭제 할 경우 
+delete from studenttbl where no = '010101';
+
+-- 수정
+UPDATE studenttbl SET kor = 60, eng = 60, math = 60, total = 180, avr = 60.00, grade = 'D' where no = '010203';
+
+-- 전체를 읽어줄것
+select * from studenttbl;
+select * from studenttbl where name like '%홍길동%';
+
+-- 정렬하기 : 학번, 이름, 총점
+select * from studenttbl order by no desc;
+
+-- 최대값, 최소값 구하기 as는 별칭
+select max(total) as '점수최대값' from studenttbl;
+select min(total) as '점수최소값' from studenttbl;
+select max(kor) from student;
+
+-- total = 300인 사select * from studenttbl where total = (select max(total) from student);
+select * from studenttbl where total =   (select min(total) from studenttbl);
+select * from studenttbl where kor = (select max(kor) from studenttbl);
+-- 프로시저 생성(합계, 평균, 등급 계산해주는 함수)
+drop procedure if exists procedure_insert_studenttbl;
+
+delimiter //
+create procedure procedure_insert_studenttbl(
+   IN in_no char(6),
+   IN in_name char(6),
+    IN in_kor int,
+    IN in_eng int,
+    IN in_math int
+)
+begin
+   -- 총점 평균 등급 변수선언
+    DECLARE in_total int default 0;
+    DECLARE in_avr double default 0.0;
+    DECLARE in_grade varchar(2) default null;
+    -- 총점계산
+    SET in_total = in_kor + in_eng + in_math;
+    -- 평균계산
+    SET in_avr = in_total / 3.0;
+    -- 등급계산
+    SEt in_grade = 
+      CASE
+         WHEN in_avr >= 90.0   THEN 'A'
+            WHEN in_avr >= 80.0   THEN 'B'
+            WHEN in_avr >= 70.0   THEN 'C'
+            WHEN in_avr >= 60.0   THEN 'D'
+            ELSE 'F'
+      END;
+   -- 삽입 insert into student() values();
+    insert into studenttbl(no, name, kor, eng, math) values(in_no, in_name, in_kor, in_eng, in_math);
+    -- 수정 update studnet set 총점 바꿔주고 평균 바꿔주고 등급 바꿔주고 where id = 등록한아이디;
+    update studenttbl set total = in_total, avr = in_avr, grade = in_grade where no = in_no;
+end //
+delimiter ;
+
+-- 트리거 생성
+delimiter //
+create trigger trg_deleteStudent
+   after delete
+    on studenttbl
+    for each row
+begin
+INSERT INTO deleteStudent values(old.no,old.name,old.kor,old.eng,old.math,old.total,old.avr,
+   old.grade,old.rate, now());
+    
+end //
+delimiter ;
+select * from deletestudent;
+
+use studentdb;
+
+delimiter //
+create trigger trg_updateStudent
+   after update
+    on studenttbl
+    for each row
+begin
+insert into updatestudent values(old.no,old.name,old.kor,old.eng,old.math,old.total,old.avr,
+   old.grade,old.rate, now());
+end //
+
+delimiter ;
+-- 인덱스 설정 : name
+
+create index idx_studenttbl_no on studenttbl(no);
+
+update studenttbl set name = '방시혁' where no = '020202';
+
+select * from updatestudent;
+        
+
+
+
+ drop table if exists studenttbl;
+ drop database if exists StudentDB;
